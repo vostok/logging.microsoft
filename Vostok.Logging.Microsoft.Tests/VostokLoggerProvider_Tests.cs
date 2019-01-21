@@ -33,7 +33,8 @@ namespace Vostok.Logging.Microsoft.Tests
             var loggerProvider = new VostokLoggerProvider(log);
             var logger = loggerProvider.CreateLogger(context);
             logger.LogInformation("message");
-            var actualSourceContext = log.Events.Single().Properties?.GetValueOrDefault(WellKnownProperties.SourceContext);
+            object actualSourceContext = null;
+            log.Events.Single().Properties?.TryGetValue(WellKnownProperties.SourceContext, out actualSourceContext);
             actualSourceContext.Should().Be(context);
         }
 
