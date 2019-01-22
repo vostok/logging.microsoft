@@ -67,7 +67,7 @@ namespace Vostok.Logging.Microsoft
                     return;
 
                 var messageTemplate = ExtractMessageTemplate(state, exception, formatter);
-                var logEvent = EnrichWithProperties(new LogEvent(translatedLevel, DateTimeOffset.Now, messageTemplate, exception), state);
+                var logEvent = EnrichWithProperties(new LogEvent(translatedLevel, DateTimeOffset.Now, messageTemplate, exception), eventId, state);
                 log.Log(logEvent);
             }
 
@@ -105,7 +105,7 @@ namespace Vostok.Logging.Microsoft
                 return currentScope;
             }
 
-            private static LogEvent EnrichWithProperties<TState>(LogEvent logEvent, TState state)
+            private static LogEvent EnrichWithProperties<TState>(LogEvent logEvent, EventId eventId, TState state)
             {
                 if (state is IEnumerable<KeyValuePair<string, object>> props)
                 {
@@ -117,6 +117,9 @@ namespace Vostok.Logging.Microsoft
                     }
                 }
 
+                if (eventId.Id != 0 || !string.IsNullOrEmpty(eventId.Name))
+                    logEvent = logEvent.WithPropertyIfAbsent("EventId", eventId);
+                        
                 return logEvent;
             }
 

@@ -166,6 +166,22 @@ namespace Vostok.Logging.Microsoft.Tests
             log.Events.Should().ContainSingle().Which.Timestamp.Offset.Should().Be(DateTimeOffset.Now.Offset);
         }
 
+        [Test]
+        public void Log_WithEventId_LogsValidEvent()
+        {
+            var eventId = new EventId(1, "eventId");
+            loggerProvider.CreateLogger(null).LogCritical(eventId, "message");
+
+            var expectedLogEvent = new LogEvent(LogLevel.Fatal, DateTimeOffset.Now, "message")
+                .WithProperty("EventId", eventId);
+
+            log.Events.Single()
+                .Should()
+                .BeEquivalentTo(
+                    expectedLogEvent,
+                    o => o.Excluding(x => x.Timestamp));
+        }
+        
         private class MemoryLog : ILog
         {
             public List<LogEvent> Events { get; } = new List<LogEvent>();
