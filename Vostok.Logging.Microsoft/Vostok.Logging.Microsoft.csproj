@@ -41,6 +41,12 @@
     <None Include="..\module.yaml">
       <Link>module.yaml</Link>
     </None>
+    <None Include="..\CHANGELOG.md">
+      <Link>CHANGELOG.md</Link>
+    </None>
+    <None Include="..\README.md">
+      <Link>README.md</Link>
+    </None>
   </ItemGroup>
 
 </Project>
