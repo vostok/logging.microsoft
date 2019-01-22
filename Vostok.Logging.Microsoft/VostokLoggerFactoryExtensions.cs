@@ -5,8 +5,9 @@ using Vostok.Logging.Abstractions;
 namespace Vostok.Logging.Microsoft
 {
     /// <summary>
-    /// Extension methods for use vostok logging in Microsoft.Extensions.Logging  
+    /// Extension methods allowing to add Vostok logging implementation to Microsoft.Extensions.Logging subsystem.
     /// </summary>
+    [PublicAPI]
     public static class VostokLoggerExtensions
     {
         /// <summary>

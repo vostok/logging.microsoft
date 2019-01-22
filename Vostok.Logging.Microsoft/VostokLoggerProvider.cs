@@ -9,8 +9,9 @@ namespace Vostok.Logging.Microsoft
 {
     /// <inheritdoc />
     /// <summary>
-    /// <para>Logger provider for writing log events into Vostok <see cref="ILog"/></para>
+    /// <para>Logger provider for writing log events into Vostok <see cref="ILog"/>.</para>
     /// </summary>
+    [PublicAPI]
     public class VostokLoggerProvider : ILoggerProvider
     {
         private readonly ILog log;
