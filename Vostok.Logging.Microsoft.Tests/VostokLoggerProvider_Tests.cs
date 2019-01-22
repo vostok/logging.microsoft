@@ -112,8 +112,6 @@ namespace Vostok.Logging.Microsoft.Tests
         [Test]
         public void Log_InScopeWithProperties_LogsWithScopeProperties()
         {
-            var log = new MemoryLog();
-            var loggerProvider = new VostokLoggerProvider(log);
             var logger = loggerProvider.CreateLogger(null);
             using (logger.BeginScope("scope {sp1} {sp2}", "sv1", "sv2"))
             {
@@ -137,8 +135,6 @@ namespace Vostok.Logging.Microsoft.Tests
         [Test]
         public void Log_InNestedScope_LogsWithNestedScope()
         {
-            var log = new MemoryLog();
-            var loggerProvider = new VostokLoggerProvider(log);
             var logger = loggerProvider.CreateLogger(null);
             using (logger.BeginScope("s1"))
             using (logger.BeginScope("s2"))
