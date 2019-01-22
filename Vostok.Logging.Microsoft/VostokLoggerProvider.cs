@@ -47,8 +47,10 @@ namespace Vostok.Logging.Microsoft
         private class Logger : ILogger
         {
             private const string OriginalFormatKey = "{OriginalFormat}";
+            private const string ScopeProperty = "Scope";
 
             private ILog log;
+            private Scope currentScope;
 
             public Logger(ILog log)
             {
@@ -59,7 +61,7 @@ namespace Vostok.Logging.Microsoft
             {
                 if (logLevel == LogLevel.None)
                     return;
-                
+
                 var translatedLevel = TranslateLogLevel(logLevel);
                 if (!log.IsEnabledFor(translatedLevel))
                     return;
@@ -73,7 +75,34 @@ namespace Vostok.Logging.Microsoft
 
             public IDisposable BeginScope<TState>(TState state)
             {
-                return new Scope<TState>(this, state);
+                var prevLog = log;
+                var scopeValue = ReferenceEquals(state, null) ? typeof(TState).FullName : Convert.ToString(state);
+                var scope = new Scope(this, prevLog, currentScope, scopeValue);
+
+                var properties = new Dictionary<string, object>();
+                if (currentScope == null)
+                    properties.Add(ScopeProperty, scopeValue);
+                else
+                {
+                    var scopePropertyValue = new List<string>();
+                    for (var s = scope; s != null; s = s.Parent)
+                        scopePropertyValue.Add(s.ScopeValue);
+                    scopePropertyValue.Reverse();
+                    properties.Add(ScopeProperty, scopePropertyValue);
+                }
+
+                if (state is IEnumerable<KeyValuePair<string, object>> props)
+                {
+                    foreach (var kvp in props)
+                    {
+                        if (kvp.Key != OriginalFormatKey)
+                            properties[kvp.Key] = kvp.Value;
+                    }
+                }
+
+                log = log.WithProperties(properties);
+                currentScope = scope;
+                return currentScope;
             }
 
             private static LogEvent EnrichWithProperties<TState>(LogEvent logEvent, TState state)
@@ -128,25 +157,25 @@ namespace Vostok.Logging.Microsoft
                 }
             }
 
-            private class Scope<TState> : IDisposable
+            private class Scope : IDisposable
             {
+                public readonly Scope Parent;
+                public readonly string ScopeValue;
                 private readonly Logger owner;
                 private readonly ILog prevLog;
-                private bool disposed;
 
-                public Scope(Logger owner, TState state)
+                public Scope(Logger owner, ILog prevLog, Scope parent, string scopeValue)
                 {
                     this.owner = owner;
-                    prevLog = owner.log;
-                    owner.log = prevLog.WithObjectProperties(state);
+                    this.prevLog = prevLog;
+                    Parent = parent;
+                    ScopeValue = scopeValue;
                 }
 
                 public void Dispose()
                 {
-                    if (disposed)
-                        return;
                     owner.log = prevLog;
-                    disposed = true;
+                    owner.currentScope = Parent;
                 }
             }
         }

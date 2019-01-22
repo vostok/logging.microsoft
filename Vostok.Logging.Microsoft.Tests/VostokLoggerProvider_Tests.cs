@@ -22,7 +22,6 @@ namespace Vostok.Logging.Microsoft.Tests
         {
             log = new MemoryLog();
             loggerProvider = new VostokLoggerProvider(log);
-            
         }
 
         [TestCase(LogLevel.Warn, MsLogLevel.Error, true)]
@@ -54,52 +53,109 @@ namespace Vostok.Logging.Microsoft.Tests
         public void Log_SimpleMessage_LogsValidEvent()
         {
             loggerProvider.CreateLogger(null).LogInformation("message");
-            
+
             var expectedLogEvent = new LogEvent(LogLevel.Info, DateTimeOffset.Now, "message");
-            
-            log.Events.Single().Should().BeEquivalentTo(
-                expectedLogEvent,
-                o => o.Excluding(x => x.Timestamp));
+
+            log.Events.Single()
+                .Should()
+                .BeEquivalentTo(
+                    expectedLogEvent,
+                    o => o.Excluding(x => x.Timestamp));
         }
 
         [Test]
         public void Log_MessageWithNamedPlaceholders_LogsValidEvent()
         {
             loggerProvider.CreateLogger(null).LogDebug("message {p1} {p2}", "v1", "v2");
-            
+
             var expectedLogEvent = new LogEvent(LogLevel.Debug, DateTimeOffset.Now, "message {p1} {p2}")
                 .WithProperty("p1", "v1")
                 .WithProperty("p2", "v2");
-            
-            log.Events.Single().Should().BeEquivalentTo(
-                expectedLogEvent,
-                o => o.Excluding(x => x.Timestamp));
+
+            log.Events.Single()
+                .Should()
+                .BeEquivalentTo(
+                    expectedLogEvent,
+                    o => o.Excluding(x => x.Timestamp));
         }
-        
+
         [Test]
         public void Log_MessageWithPositionPlaceholders_LogsValidEvent()
         {
             loggerProvider.CreateLogger(null).LogCritical("message {0} {1}", "v1", "v2");
-            
+
             var expectedLogEvent = new LogEvent(LogLevel.Fatal, DateTimeOffset.Now, "message {0} {1}")
                 .WithProperty("0", "v1")
                 .WithProperty("1", "v2");
-            
-            log.Events.Single().Should().BeEquivalentTo(
-                expectedLogEvent,
-                o => o.Excluding(x => x.Timestamp));
+
+            log.Events.Single()
+                .Should()
+                .BeEquivalentTo(
+                    expectedLogEvent,
+                    o => o.Excluding(x => x.Timestamp));
         }
-        
+
         [Test]
         public void Log_WithException_LogsValidEvent()
         {
             loggerProvider.CreateLogger(null).LogInformation(new Exception("exception"), "message");
-            
+
             var expectedLogEvent = new LogEvent(LogLevel.Info, DateTimeOffset.Now, "message", new Exception("exception"));
-            
-            log.Events.Single().Should().BeEquivalentTo(
-                expectedLogEvent,
-                o => o.Excluding(x => x.Timestamp));
+
+            log.Events.Single()
+                .Should()
+                .BeEquivalentTo(
+                    expectedLogEvent,
+                    o => o.Excluding(x => x.Timestamp));
+        }
+
+        [Test]
+        public void Log_InScopeWithProperties_LogsWithScopeProperties()
+        {
+            var log = new MemoryLog();
+            var loggerProvider = new VostokLoggerProvider(log);
+            var logger = loggerProvider.CreateLogger(null);
+            using (logger.BeginScope("scope {sp1} {sp2}", "sv1", "sv2"))
+            {
+                logger.LogInformation("message {p1} {p2}", "v1", "v2");
+            }
+
+            var expectedLogEvent = new LogEvent(LogLevel.Info, DateTimeOffset.UtcNow, "message {p1} {p2}")
+                .WithProperty("Scope", "scope sv1 sv2")
+                .WithProperty("sp1", "sv1")
+                .WithProperty("sp2", "sv2")
+                .WithProperty("p1", "v1")
+                .WithProperty("p2", "v2");
+
+            log.Events.Single()
+                .Should()
+                .BeEquivalentTo(
+                    expectedLogEvent,
+                    o => o.Excluding(x => x.Timestamp));
+        }
+
+        [Test]
+        public void Log_InNestedScope_LogsWithNestedScope()
+        {
+            var log = new MemoryLog();
+            var loggerProvider = new VostokLoggerProvider(log);
+            var logger = loggerProvider.CreateLogger(null);
+            using (logger.BeginScope("s1"))
+            using (logger.BeginScope("s2"))
+            {
+                logger.LogInformation("message {p1} {p2}", "v1", "v2");
+            }
+
+            var expectedLogEvent = new LogEvent(LogLevel.Info, DateTimeOffset.UtcNow, "message {p1} {p2}")
+                .WithProperty("Scope", new[] {"s1", "s2"})
+                .WithProperty("p1", "v1")
+                .WithProperty("p2", "v2");
+
+            log.Events.Single()
+                .Should()
+                .BeEquivalentTo(
+                    expectedLogEvent,
+                    o => o.Excluding(x => x.Timestamp));
         }
 
         [Test]
