@@ -167,13 +167,43 @@ namespace Vostok.Logging.Microsoft.Tests
         }
 
         [Test]
-        public void Log_WithEventId_LogsValidEvent()
+        public void Log_WithEventIdWithIdAndName_LogsValidEvent()
         {
-            var eventId = new EventId(1, "eventId");
-            loggerProvider.CreateLogger(null).LogCritical(eventId, "message");
+            loggerProvider.CreateLogger(null).LogCritical(new EventId(1, "eventId"), "message");
 
             var expectedLogEvent = new LogEvent(LogLevel.Fatal, DateTimeOffset.Now, "message")
-                .WithProperty("EventId", eventId);
+                .WithProperty("EventId.Id", 1)
+                .WithProperty("EventId.Name", "eventId");
+
+            log.Events.Single()
+                .Should()
+                .BeEquivalentTo(
+                    expectedLogEvent,
+                    o => o.Excluding(x => x.Timestamp));
+        }
+        
+        [Test]
+        public void Log_WithEventIdWithIdOnly_LogsValidEvent()
+        {
+            loggerProvider.CreateLogger(null).LogCritical(new EventId(1), "message");
+
+            var expectedLogEvent = new LogEvent(LogLevel.Fatal, DateTimeOffset.Now, "message")
+                .WithProperty("EventId.Id", 1);
+
+            log.Events.Single()
+                .Should()
+                .BeEquivalentTo(
+                    expectedLogEvent,
+                    o => o.Excluding(x => x.Timestamp));
+        }
+        
+        [Test]
+        public void Log_WithEventIdWithNAMEOnly_LogsValidEvent()
+        {
+            loggerProvider.CreateLogger(null).LogCritical(new EventId(0, "eventId"), "message");
+
+            var expectedLogEvent = new LogEvent(LogLevel.Fatal, DateTimeOffset.Now, "message")
+                .WithProperty("EventId.Name", "eventId");
 
             log.Events.Single()
                 .Should()

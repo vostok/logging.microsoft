@@ -117,9 +117,11 @@ namespace Vostok.Logging.Microsoft
                     }
                 }
 
-                if (eventId.Id != 0 || !string.IsNullOrEmpty(eventId.Name))
-                    logEvent = logEvent.WithPropertyIfAbsent("EventId", eventId);
-                        
+                if (eventId.Id != 0)
+                    logEvent = logEvent.WithPropertyIfAbsent("EventId.Id", eventId.Id);
+                if (!string.IsNullOrEmpty(eventId.Name))
+                    logEvent = logEvent.WithPropertyIfAbsent("EventId.Name", eventId.Name);
+
                 return logEvent;
             }
 
