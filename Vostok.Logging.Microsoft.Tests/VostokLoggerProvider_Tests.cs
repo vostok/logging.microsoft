@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
@@ -207,14 +209,49 @@ namespace Vostok.Logging.Microsoft.Tests
                     expectedLogEvent,
                     o => o.Excluding(x => x.Timestamp));
         }
-        
+ 
+        [Test]
+        public void Log_InScopeInDifferentAsyncLocalContexts_LogsInValidScopes()
+        {
+            var logger = loggerProvider.CreateLogger(null);
+
+            var start = new ManualResetEventSlim(false);
+            var wait = new ManualResetEventSlim(false);
+                
+            var task = Task.Run(
+                () =>
+                {
+                    using (logger.BeginScope("inner-scope"))
+                    {
+                        start.Set();
+                        wait.Wait();
+                    }
+                });
+
+            start.Wait();
+            using (logger.BeginScope("outer-scope"))
+                logger.LogInformation("message");
+            wait.Set();
+            task.Wait();
+
+            var expectedLogEvent = new LogEvent(LogLevel.Info, DateTimeOffset.UtcNow, "message")
+                .WithProperty("Scope", "outer-scope");
+
+            log.Events.Single()
+                .Should()
+                .BeEquivalentTo(
+                    expectedLogEvent,
+                    o => o.Excluding(x => x.Timestamp));
+        }
+       
         private class MemoryLog : ILog
         {
-            public List<LogEvent> Events { get; } = new List<LogEvent>();
+            public readonly List<LogEvent> Events = new List<LogEvent>();
 
             public void Log(LogEvent @event)
             {
-                Events.Add(@event);
+                lock(Events)
+                    Events.Add(@event);
             }
 
             public bool IsEnabledFor(LogLevel level) => true;

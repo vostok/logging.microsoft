@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
 using Vostok.Logging.Abstractions;
@@ -49,8 +50,8 @@ namespace Vostok.Logging.Microsoft
             private const string OriginalFormatKey = "{OriginalFormat}";
             private const string ScopeProperty = "Scope";
 
-            private ILog log;
-            private Scope currentScope;
+            private readonly ILog log;
+            private readonly AsyncLocal<Scope> currentScope = new AsyncLocal<Scope>();
 
             public Logger(ILog log)
             {
@@ -68,29 +69,26 @@ namespace Vostok.Logging.Microsoft
 
                 var messageTemplate = ExtractMessageTemplate(state, exception, formatter);
                 var logEvent = EnrichWithProperties(new LogEvent(translatedLevel, DateTimeOffset.Now, messageTemplate, exception), eventId, state);
-                log.Log(logEvent);
+                (currentScope.Value?.Log ?? log).Log(logEvent);
             }
 
             public bool IsEnabled(LogLevel logLevel) => logLevel != LogLevel.None && log.IsEnabledFor(TranslateLogLevel(logLevel));
 
             public IDisposable BeginScope<TState>(TState state)
             {
-                var prevLog = log;
                 var scopeValue = ReferenceEquals(state, null) ? typeof(TState).FullName : Convert.ToString(state);
-                var scope = new Scope(this, prevLog, currentScope, scopeValue);
-
+                
                 var properties = new Dictionary<string, object>();
-                if (currentScope == null)
+                if (currentScope.Value == null)
                     properties.Add(ScopeProperty, scopeValue);
                 else
                 {
-                    var scopePropertyValue = new List<string>();
-                    for (var s = scope; s != null; s = s.Parent)
+                    var scopePropertyValue = new List<string>{ scopeValue };
+                    for (var s = currentScope.Value; s != null; s = s.Parent)
                         scopePropertyValue.Add(s.ScopeValue);
                     scopePropertyValue.Reverse();
                     properties.Add(ScopeProperty, scopePropertyValue);
                 }
-
                 if (state is IEnumerable<KeyValuePair<string, object>> props)
                 {
                     foreach (var kvp in props)
@@ -99,10 +97,12 @@ namespace Vostok.Logging.Microsoft
                             properties[kvp.Key] = kvp.Value;
                     }
                 }
-
-                log = log.WithProperties(properties);
-                currentScope = scope;
-                return currentScope;
+                
+                var scopeLog = log.WithProperties(properties);
+                
+                var scope = new Scope(this, scopeLog, currentScope.Value, scopeValue);
+                currentScope.Value = scope;
+                return scope;
             }
 
             private static LogEvent EnrichWithProperties<TState>(LogEvent logEvent, EventId eventId, TState state)
@@ -164,23 +164,23 @@ namespace Vostok.Logging.Microsoft
 
             private class Scope : IDisposable
             {
+                private readonly Logger owner;
+                
                 public readonly Scope Parent;
                 public readonly string ScopeValue;
-                private readonly Logger owner;
-                private readonly ILog prevLog;
+                public readonly ILog Log;
 
-                public Scope(Logger owner, ILog prevLog, Scope parent, string scopeValue)
+                public Scope(Logger owner, ILog log, Scope parent, string scopeValue)
                 {
                     this.owner = owner;
-                    this.prevLog = prevLog;
+                    Log = log;
                     Parent = parent;
                     ScopeValue = scopeValue;
                 }
 
                 public void Dispose()
                 {
-                    owner.log = prevLog;
-                    owner.currentScope = Parent;
+                    owner.currentScope.Value = Parent;
                 }
             }
         }
