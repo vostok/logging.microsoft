@@ -65,7 +65,7 @@ namespace Vostok.Logging.Microsoft
                     return;
 
                 var messageTemplate = ExtractMessageTemplate(state, exception, formatter);
-                var logEvent = EnrichWithProperties(new LogEvent(translatedLevel, DateTimeOffset.UtcNow, messageTemplate, exception), state);
+                var logEvent = EnrichWithProperties(new LogEvent(translatedLevel, DateTimeOffset.Now, messageTemplate, exception), state);
                 log.Log(logEvent);
             }
 

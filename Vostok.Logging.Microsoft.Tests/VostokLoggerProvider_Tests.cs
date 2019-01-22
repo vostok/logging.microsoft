@@ -14,14 +14,26 @@ namespace Vostok.Logging.Microsoft.Tests
     [TestFixture]
     public class VostokLoggerProvider_Tests
     {
+        private MemoryLog log;
+        private VostokLoggerProvider loggerProvider;
+
+        [SetUp]
+        public void TestSetup()
+        {
+            log = new MemoryLog();
+            loggerProvider = new VostokLoggerProvider(log);
+            
+        }
+
         [TestCase(LogLevel.Warn, MsLogLevel.Error, true)]
         [TestCase(LogLevel.Warn, MsLogLevel.Warning, true)]
         [TestCase(LogLevel.Warn, MsLogLevel.Information, false)]
         public void IsEnabledFor_ReturnsValidResult(LogLevel minLevel, MsLogLevel level, bool expectedEnabled)
         {
-            var log = new MemoryLog().WithMinimumLevel(minLevel);
-            var loggerProvider = new VostokLoggerProvider(log);
+            loggerProvider = new VostokLoggerProvider(log.WithMinimumLevel(minLevel));
+
             var logger = loggerProvider.CreateLogger(null);
+
             logger.IsEnabled(level).Should().Be(expectedEnabled);
         }
 
@@ -29,24 +41,21 @@ namespace Vostok.Logging.Microsoft.Tests
         [TestCase("context")]
         public void CreateLoggerForCategory_ReturnsLoggerForValidContext(string context)
         {
-            var log = new MemoryLog();
-            var loggerProvider = new VostokLoggerProvider(log);
-            var logger = loggerProvider.CreateLogger(context);
-            logger.LogInformation("message");
+            loggerProvider.CreateLogger(context).LogInformation("message");
+
             object actualSourceContext = null;
+
             log.Events.Single().Properties?.TryGetValue(WellKnownProperties.SourceContext, out actualSourceContext);
+
             actualSourceContext.Should().Be(context);
         }
 
         [Test]
         public void Log_SimpleMessage_LogsValidEvent()
         {
-            var log = new MemoryLog();
-            var loggerProvider = new VostokLoggerProvider(log);
-            var logger = loggerProvider.CreateLogger(null);
-            logger.LogInformation("message");
+            loggerProvider.CreateLogger(null).LogInformation("message");
             
-            var expectedLogEvent = new LogEvent(LogLevel.Info, DateTimeOffset.UtcNow, "message");
+            var expectedLogEvent = new LogEvent(LogLevel.Info, DateTimeOffset.Now, "message");
             
             log.Events.Single().Should().BeEquivalentTo(
                 expectedLogEvent,
@@ -56,12 +65,9 @@ namespace Vostok.Logging.Microsoft.Tests
         [Test]
         public void Log_MessageWithNamedPlaceholders_LogsValidEvent()
         {
-            var log = new MemoryLog();
-            var loggerProvider = new VostokLoggerProvider(log);
-            var logger = loggerProvider.CreateLogger(null);
-            logger.LogDebug("message {p1} {p2}", "v1", "v2");
+            loggerProvider.CreateLogger(null).LogDebug("message {p1} {p2}", "v1", "v2");
             
-            var expectedLogEvent = new LogEvent(LogLevel.Debug, DateTimeOffset.UtcNow, "message {p1} {p2}")
+            var expectedLogEvent = new LogEvent(LogLevel.Debug, DateTimeOffset.Now, "message {p1} {p2}")
                 .WithProperty("p1", "v1")
                 .WithProperty("p2", "v2");
             
@@ -73,12 +79,9 @@ namespace Vostok.Logging.Microsoft.Tests
         [Test]
         public void Log_MessageWithPositionPlaceholders_LogsValidEvent()
         {
-            var log = new MemoryLog();
-            var loggerProvider = new VostokLoggerProvider(log);
-            var logger = loggerProvider.CreateLogger(null);
-            logger.LogCritical("message {0} {1}", "v1", "v2");
+            loggerProvider.CreateLogger(null).LogCritical("message {0} {1}", "v1", "v2");
             
-            var expectedLogEvent = new LogEvent(LogLevel.Fatal, DateTimeOffset.UtcNow, "message {0} {1}")
+            var expectedLogEvent = new LogEvent(LogLevel.Fatal, DateTimeOffset.Now, "message {0} {1}")
                 .WithProperty("0", "v1")
                 .WithProperty("1", "v2");
             
@@ -90,16 +93,21 @@ namespace Vostok.Logging.Microsoft.Tests
         [Test]
         public void Log_WithException_LogsValidEvent()
         {
-            var log = new MemoryLog();
-            var loggerProvider = new VostokLoggerProvider(log);
-            var logger = loggerProvider.CreateLogger(null);
-            logger.LogInformation(new Exception("exception"), "message");
+            loggerProvider.CreateLogger(null).LogInformation(new Exception("exception"), "message");
             
-            var expectedLogEvent = new LogEvent(LogLevel.Info, DateTimeOffset.UtcNow, "message", new Exception("exception"));
+            var expectedLogEvent = new LogEvent(LogLevel.Info, DateTimeOffset.Now, "message", new Exception("exception"));
             
             log.Events.Single().Should().BeEquivalentTo(
                 expectedLogEvent,
                 o => o.Excluding(x => x.Timestamp));
+        }
+
+        [Test]
+        public void Should_create_a_timestamp_with_local_time_zone()
+        {
+            loggerProvider.CreateLogger(null).LogInformation("message");
+
+            log.Events.Should().ContainSingle().Which.Timestamp.Offset.Should().Be(DateTimeOffset.Now.Offset);
         }
 
         private class MemoryLog : ILog
