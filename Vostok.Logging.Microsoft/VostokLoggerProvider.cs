@@ -22,7 +22,7 @@ namespace Vostok.Logging.Microsoft
         /// <param name="log"><see cref="ILog"/> to write log events to</param>
         public VostokLoggerProvider([NotNull] ILog log)
         {
-            this.log = log;
+            this.log = log ?? throw new ArgumentNullException(nameof(log));
         }
 
         /// <inheritdoc />
@@ -40,8 +40,6 @@ namespace Vostok.Logging.Microsoft
         }
 
         /// <inheritdoc />
-        /// <summary>
-        /// </summary>
         public void Dispose()
         {
         }
