@@ -7,6 +7,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 using Vostok.Logging.Abstractions;
+using Vostok.Logging.Abstractions.Values;
 using Vostok.Logging.Abstractions.Wrappers;
 using LogLevel = Vostok.Logging.Abstractions.LogLevel;
 using MsLogLevel = Microsoft.Extensions.Logging.LogLevel;
@@ -48,7 +49,14 @@ namespace Vostok.Logging.Microsoft.Tests
 
             log.Events.Single().Properties?.TryGetValue(WellKnownProperties.SourceContext, out actualSourceContext);
 
-            actualSourceContext.Should().Be(context);
+            if (context == null)
+            {
+                actualSourceContext.Should().BeNull();
+            }
+            else
+            {
+                actualSourceContext.Should().BeOfType<SourceContextValue>().Which.Should().Equal(context);
+            }
         }
 
         [Test]
