@@ -77,18 +77,18 @@ namespace Vostok.Logging.Microsoft
             public IDisposable BeginScope<TState>(TState state)
             {
                 var scopeValue = ReferenceEquals(state, null) ? typeof(TState).FullName : Convert.ToString(state);
+                var scopeLog = log.WithOperationContext();
 
-                var properties = new Dictionary<string, object>();
                 if (state is IEnumerable<KeyValuePair<string, object>> props)
                 {
                     foreach (var kvp in props)
                     {
                         if (kvp.Key != OriginalFormatKey)
-                            properties[kvp.Key] = kvp.Value;
+                        {
+                            scopeLog = scopeLog.WithProperty(kvp.Key, kvp.Value);
+                        }
                     }
                 }
-                
-                var scopeLog = log.WithProperties(properties).WithOperationContext();
                 
                 var scope = new Scope(scopeLog, scopeValue);
                 currentScope.Value = scope;
