@@ -165,7 +165,7 @@ namespace Vostok.Logging.Microsoft.Tests
         }
 
         [Test]
-        public void Log_InDisabledScope_LogsWithoutScope()
+        public void Log_InIgnoredScope_LogsWithoutScope()
         {
             loggerProvider = new VostokLoggerProvider(
                 log,
