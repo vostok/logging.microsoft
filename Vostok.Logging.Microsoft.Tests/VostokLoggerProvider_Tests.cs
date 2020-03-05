@@ -165,6 +165,33 @@ namespace Vostok.Logging.Microsoft.Tests
         }
 
         [Test]
+        public void Log_InScopeWithNamedProperties_LogsWithAllScopeProperties()
+        {
+            var logger = loggerProvider.CreateLogger(null);
+            using (logger.BeginScope(new Dictionary<string, object>() {["key"] = "value"}))
+            using (logger.BeginScope(new Dictionary<string, object>() {["key2"] = "value2"}))
+                logger.LogInformation("message");
+
+            var expectedLogEvent = new LogEvent(LogLevel.Info, DateTimeOffset.UtcNow, "message")
+                .WithProperty(
+                    "operationContext",
+                    new OperationContextValue(
+                        new[]
+                        {
+                            "System.Collections.Generic.Dictionary`2[System.String,System.Object]",
+                            "System.Collections.Generic.Dictionary`2[System.String,System.Object]"
+                        }))
+                .WithProperty("key", "value")
+                .WithProperty("key2", "value2");
+
+            log.Events.Single()
+                .Should()
+                .BeEquivalentTo(
+                    expectedLogEvent,
+                    o => o.Excluding(x => x.Timestamp));
+        }
+
+        [Test]
         public void Log_InIgnoredScope_LogsWithoutScope()
         {
             loggerProvider = new VostokLoggerProvider(
