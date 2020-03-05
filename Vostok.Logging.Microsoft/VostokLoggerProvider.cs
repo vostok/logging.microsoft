@@ -98,7 +98,7 @@ namespace Vostok.Logging.Microsoft
                     return new EmptyDisposable();
 
                 var scopeValue = state == null ? scopeName : Convert.ToString(state);
-                var scopeLog = log.WithOperationContext();
+                var scopeLog = scope.Value?.Log ?? log.WithOperationContext();
 
                 if (state is IEnumerable<KeyValuePair<string, object>> props)
                 {
