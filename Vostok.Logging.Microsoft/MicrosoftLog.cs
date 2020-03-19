@@ -8,24 +8,26 @@ using Vostok.Logging.Formatting;
 using VostokLogLevel = Vostok.Logging.Abstractions.LogLevel;
 using MicrosoftLogLevel = Microsoft.Extensions.Logging.LogLevel;
 
-namespace Vostok.Logging.Microsoft.Adapters
+namespace Vostok.Logging.Microsoft
 {
     [PublicAPI]
-    public sealed class MicrosoftVostokLogAdapter : ILog
+    public sealed class MicrosoftLog : ILog
     {
         private const int NullEventId = 0;
-        private readonly Func<FormattedLogValues, Exception, string> messageFormatter = MessageFormatter;
-
-        private readonly ILogger logger;
-        private readonly OutputTemplate template = OutputTemplate.Parse(
+        private static readonly Func<FormattedLogValues, Exception, string> MessageFormatter = FormatMessage;
+        private static readonly OutputTemplate Template = OutputTemplate.Parse(
             $"{{{WellKnownProperties.TraceContext}:w}}" +
             $"{{{WellKnownProperties.OperationContext}:w}}" +
             $"{{{WellKnownProperties.SourceContext}:w}}" +
             $"{{{WellKnownTokens.Message}}}");
 
-        public MicrosoftVostokLogAdapter(ILogger logger)
+        private readonly ILogger logger;
+        private readonly MicrosoftLogSettings settings;
+
+        public MicrosoftLog([NotNull] ILogger logger, [CanBeNull] MicrosoftLogSettings settings = null)
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this.settings = settings ?? new MicrosoftLogSettings();
         }
 
         public void Log(LogEvent @event)
@@ -37,13 +39,17 @@ namespace Vostok.Logging.Microsoft.Adapters
                 return;
 
             var logLevel = ConvertLogLevel(@event.Level);
-            var message = LogEventFormatter.Format(@event, template);
+
+            var message = settings.UseVostokTemplate
+                ? LogEventFormatter.Format(@event, Template)
+                : LogMessageFormatter.Format(@event);
+
             var state = new FormattedLogValues(message, Array.Empty<object>());
 
-            logger.Log(logLevel, NullEventId, state, @event.Exception, messageFormatter);
+            logger.Log(logLevel, NullEventId, state, @event.Exception, MessageFormatter);
         }
 
-        private static string MessageFormatter(FormattedLogValues state, Exception error)
+        private static string FormatMessage(FormattedLogValues state, Exception error)
         {
             return state.ToString();
         }
