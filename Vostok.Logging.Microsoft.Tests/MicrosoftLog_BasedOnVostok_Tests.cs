@@ -152,7 +152,7 @@ namespace Vostok.Logging.Microsoft.Tests
 
                 oracleLog.Events.Single()
                     .Should()
-                    .BeEquivalentTo(expectedLogEvent);
+                    .BeEquivalentTo(expectedLogEvent, o => o.Excluding(x => x.Timestamp));
             }
         }
     }
