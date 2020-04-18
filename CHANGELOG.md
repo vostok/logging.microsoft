@@ -1,3 +1,7 @@
+## 2.0.9 (18.04.2020):
+
+`MicrosoftLog` now preserves structed log properties.
+
 ## 2.0.8 (19.03.2020)
 
 Added `MicrosoftLog` adapter.
