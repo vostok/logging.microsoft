@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Vostok.Commons.Helpers.Disposable;
 using Vostok.Logging.Abstractions;
 using Vostok.Logging.Context;
+using Vostok.Logging.Microsoft.Helpers;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace Vostok.Logging.Microsoft
@@ -60,10 +61,8 @@ namespace Vostok.Logging.Microsoft
         {
         }
 
-        private class Logger : ILogger
+        internal class Logger : ILogger
         {
-            private const string OriginalFormatKey = "{OriginalFormat}";
-
             private readonly ILog log;
             private readonly IReadOnlyCollection<string> ignoredScopes;
             private readonly AsyncLocal<UseScope> scope = new AsyncLocal<UseScope>();
@@ -74,10 +73,23 @@ namespace Vostok.Logging.Microsoft
                 this.ignoredScopes = ignoredScopes;
             }
 
-            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+            public void Log<TState>(
+                LogLevel logLevel,
+                EventId eventId,
+                TState state,
+                Exception exception,
+                Func<TState, Exception, string> formatter)
             {
                 if (logLevel == LogLevel.None)
                     return;
+
+                var localLog = scope.Value?.Log ?? log;
+
+                if (state is VostokLogEventWrapper logEventWrapper)
+                {
+                    localLog.Log(logEventWrapper.LogEvent);
+                    return;
+                }
 
                 var translatedLevel = TranslateLogLevel(logLevel);
                 if (!log.IsEnabledFor(translatedLevel))
@@ -85,7 +97,7 @@ namespace Vostok.Logging.Microsoft
 
                 var messageTemplate = ExtractMessageTemplate(state, exception, formatter);
                 var logEvent = EnrichWithProperties(new LogEvent(translatedLevel, DateTimeOffset.Now, messageTemplate, exception), eventId, state);
-                (scope.Value?.Log ?? log).Log(logEvent);
+                localLog.Log(logEvent);
             }
 
             public bool IsEnabled(LogLevel logLevel) => logLevel != LogLevel.None && log.IsEnabledFor(TranslateLogLevel(logLevel));
@@ -104,7 +116,7 @@ namespace Vostok.Logging.Microsoft
                 {
                     foreach (var kvp in props)
                     {
-                        if (kvp.Key != OriginalFormatKey)
+                        if (kvp.Key != MicrosoftLogProperties.OriginalFormatKey)
                         {
                             scopeLog = scopeLog.WithProperty(kvp.Key, kvp.Value);
                         }
@@ -120,7 +132,7 @@ namespace Vostok.Logging.Microsoft
                 {
                     foreach (var kvp in props)
                     {
-                        if (kvp.Key == OriginalFormatKey)
+                        if (kvp.Key == MicrosoftLogProperties.OriginalFormatKey)
                             continue;
                         logEvent = logEvent.WithPropertyIfAbsent(kvp.Key, kvp.Value);
                     }
@@ -140,7 +152,7 @@ namespace Vostok.Logging.Microsoft
                 {
                     foreach (var kvp in props)
                     {
-                        if (kvp.Key == OriginalFormatKey)
+                        if (kvp.Key == MicrosoftLogProperties.OriginalFormatKey)
                             return Convert.ToString(kvp.Value);
                     }
                 }
@@ -151,7 +163,7 @@ namespace Vostok.Logging.Microsoft
                 return ReferenceEquals(state, null) ? typeof(TState).FullName : Convert.ToString(state);
             }
 
-            private Abstractions.LogLevel TranslateLogLevel(LogLevel logLevel)
+            private static Abstractions.LogLevel TranslateLogLevel(LogLevel logLevel)
             {
                 switch (logLevel)
                 {
@@ -173,8 +185,6 @@ namespace Vostok.Logging.Microsoft
 
             private class UseScope : IDisposable
             {
-                public readonly ILog Log;
-
                 private readonly OperationContextToken operationContextToken;
                 private readonly AsyncLocal<UseScope> scope;
                 private readonly UseScope previousScopeValue;
@@ -188,8 +198,11 @@ namespace Vostok.Logging.Microsoft
                     scope.Value = this;
                 }
 
+                public ILog Log { get; }
+
                 public void Dispose()
                 {
+                    // ReSharper disable once PossiblyImpureMethodCallOnReadonlyVariable
                     operationContextToken.Dispose();
                     scope.Value = previousScopeValue;
                 }
