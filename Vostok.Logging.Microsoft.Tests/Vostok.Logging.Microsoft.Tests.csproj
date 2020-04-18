@@ -35,9 +35,10 @@
     <Reference Include="Vostok.Logging.Formatting">
       <HintPath>..\..\vostok.logging.formatting\Vostok.Logging.Formatting\bin\Release\netstandard2.0\Vostok.Logging.Formatting.dll</HintPath>
     </Reference>
-    <Reference Include="Vostok.Commons.Collections">
-      <HintPath>..\..\vostok.commons.collections\Vostok.Commons.Collections\bin\Release\netstandard2.0\Vostok.Commons.Collections.dll</HintPath>
-    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\vostok.commons.collections\Vostok.Commons.Collections\ImmutableArrayDictionary.cs" Link="Commons\ImmutableArrayDictionary.cs"/>
   </ItemGroup>
 
 </Project>

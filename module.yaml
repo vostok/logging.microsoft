@@ -9,14 +9,16 @@ notests *default:
     - Vostok.Logging.Microsoft/bin/Release/netstandard2.0/Vostok.Logging.Microsoft.dll
 
   deps:
+    - vostok.commons.helpers/src
     - vostok.devtools
     - vostok.logging.abstractions
     - vostok.logging.context
     - vostok.logging.formatting
-    - vostok.commons.helpers/src
-    - vostok.commons.collections
 
 full-build > notests:
   build:
     target: Vostok.Logging.Microsoft.sln
     configuration: Release
+
+  deps:
+    - vostok.commons.collections/src
