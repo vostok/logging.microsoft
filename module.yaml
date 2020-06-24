@@ -10,6 +10,7 @@ notests *default:
 
   deps:
     - vostok.commons.helpers/src
+    - vostok.commons.time/src
     - vostok.devtools
     - vostok.logging.abstractions
     - vostok.logging.context

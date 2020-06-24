@@ -5,6 +5,7 @@ using System.Threading;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
 using Vostok.Commons.Helpers.Disposable;
+using Vostok.Commons.Time;
 using Vostok.Logging.Abstractions;
 using Vostok.Logging.Context;
 using Vostok.Logging.Microsoft.Helpers;
@@ -101,7 +102,8 @@ namespace Vostok.Logging.Microsoft
                     return;
 
                 var messageTemplate = ExtractMessageTemplate(state, exception, formatter);
-                var logEvent = EnrichWithProperties(new LogEvent(translatedLevel, DateTimeOffset.Now, messageTemplate, exception), eventId, state);
+                var logEvent = EnrichWithProperties(new LogEvent(translatedLevel, PreciseDateTime.Now, messageTemplate, exception), eventId, state);
+                
                 localLog.Log(logEvent);
             }
 
