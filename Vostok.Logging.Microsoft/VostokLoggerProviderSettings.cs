@@ -12,5 +12,7 @@ namespace Vostok.Logging.Microsoft
         /// </summary>
         [CanBeNull]
         public IReadOnlyCollection<string> IgnoredScopes { get; set; }
+
+        public bool AddEventIdProperties { get; set; }
     }
 }
