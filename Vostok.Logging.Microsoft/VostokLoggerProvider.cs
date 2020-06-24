@@ -53,7 +53,10 @@ namespace Vostok.Logging.Microsoft
         [NotNull]
         public ILogger CreateLogger([CanBeNull] string categoryName)
         {
-            return new Logger(string.IsNullOrEmpty(categoryName) ? log : log.ForContext(categoryName), settings.IgnoredScopes);
+            return new Logger(
+                string.IsNullOrEmpty(categoryName) ? log : log.ForContext(categoryName), 
+                settings.IgnoredScopes,
+                settings.AddEventIdProperties);
         }
 
         /// <inheritdoc />
@@ -65,12 +68,14 @@ namespace Vostok.Logging.Microsoft
         {
             private readonly ILog log;
             private readonly IReadOnlyCollection<string> ignoredScopes;
+            private readonly bool addEventIdProperties;
             private readonly AsyncLocal<UseScope> scope = new AsyncLocal<UseScope>();
 
-            public Logger(ILog log, IReadOnlyCollection<string> ignoredScopes)
+            public Logger(ILog log, IReadOnlyCollection<string> ignoredScopes, bool addEventIdProperties)
             {
                 this.log = log;
                 this.ignoredScopes = ignoredScopes;
+                this.addEventIdProperties = addEventIdProperties;
             }
 
             public void Log<TState>(
@@ -126,7 +131,7 @@ namespace Vostok.Logging.Microsoft
                 return new UseScope(scopeLog, scopeValue, scope);
             }
 
-            private static LogEvent EnrichWithProperties<TState>(LogEvent logEvent, EventId eventId, TState state)
+            private LogEvent EnrichWithProperties<TState>(LogEvent logEvent, EventId eventId, TState state)
             {
                 if (state is IEnumerable<KeyValuePair<string, object>> props)
                 {
@@ -138,10 +143,14 @@ namespace Vostok.Logging.Microsoft
                     }
                 }
 
-                if (eventId.Id != 0)
-                    logEvent = logEvent.WithPropertyIfAbsent("EventId.Id", eventId.Id);
-                if (!string.IsNullOrEmpty(eventId.Name))
-                    logEvent = logEvent.WithPropertyIfAbsent("EventId.Name", eventId.Name);
+                if (addEventIdProperties)
+                {
+                    if (eventId.Id != 0)
+                        logEvent = logEvent.WithPropertyIfAbsent("EventId.Id", eventId.Id);
+
+                    if (!string.IsNullOrEmpty(eventId.Name))
+                        logEvent = logEvent.WithPropertyIfAbsent("EventId.Name", eventId.Name);
+                }
 
                 return logEvent;
             }
