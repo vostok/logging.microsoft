@@ -20,6 +20,8 @@ namespace Vostok.Logging.Microsoft
     [PublicAPI]
     public class VostokLoggerProvider : ILoggerProvider
     {
+        private static readonly EmptyDisposable emptyDisposable = new EmptyDisposable();
+
         private readonly ILog log;
         private readonly VostokLoggerProviderSettings settings;
 
@@ -114,7 +116,7 @@ namespace Vostok.Logging.Microsoft
                 var scopeName = typeof(TState).FullName;
 
                 if (ignoredScopes?.Contains(scopeName) == true)
-                    return new EmptyDisposable();
+                    return emptyDisposable;
 
                 var scopeValue = state == null ? scopeName : Convert.ToString(state);
                 var scopeLog = scope.Value?.Log ?? log.WithOperationContext();
