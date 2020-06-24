@@ -1,3 +1,9 @@
+## 2.0.10 (25.06.2020):
+
+- Do not add event id properties by default (there's a setting for it now in VostokLoggerProviderSettings).
+- Use PreciseDateTime.Now for log event timestamps.
+- BeginScope: no allocations for ignored scopes.
+
 ## 2.0.9 (18.04.2020):
 
 `MicrosoftLog` now preserves structed log properties.

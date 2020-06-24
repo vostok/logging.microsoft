@@ -255,6 +255,8 @@ namespace Vostok.Logging.Microsoft.Tests
         [Test]
         public void Log_WithEventIdWithIdAndName_LogsValidEvent()
         {
+            loggerProvider = new VostokLoggerProvider(log, new VostokLoggerProviderSettings {AddEventIdProperties = true});
+
             loggerProvider.CreateLogger(null).LogCritical(new EventId(1, "eventId"), "message");
 
             var expectedLogEvent = new VostokLogEvent(LogLevel.Fatal, DateTimeOffset.Now, "message")
@@ -271,6 +273,8 @@ namespace Vostok.Logging.Microsoft.Tests
         [Test]
         public void Log_WithEventIdWithIdOnly_LogsValidEvent()
         {
+            loggerProvider = new VostokLoggerProvider(log, new VostokLoggerProviderSettings { AddEventIdProperties = true });
+
             loggerProvider.CreateLogger(null).LogCritical(new EventId(1), "message");
 
             var expectedLogEvent = new VostokLogEvent(LogLevel.Fatal, DateTimeOffset.Now, "message")
@@ -286,6 +290,8 @@ namespace Vostok.Logging.Microsoft.Tests
         [Test]
         public void Log_WithEventIdWithNAMEOnly_LogsValidEvent()
         {
+            loggerProvider = new VostokLoggerProvider(log, new VostokLoggerProviderSettings { AddEventIdProperties = true });
+
             loggerProvider.CreateLogger(null).LogCritical(new EventId(0, "eventId"), "message");
 
             var expectedLogEvent = new VostokLogEvent(LogLevel.Fatal, DateTimeOffset.Now, "message")
