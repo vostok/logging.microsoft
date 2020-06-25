@@ -8,10 +8,16 @@ namespace Vostok.Logging.Microsoft
     public class VostokLoggerProviderSettings
     {
         /// <summary>
-        /// Full names of types, that should be ignored in <see cref="ILogger.BeginScope{TState}"></see>./>
+        /// Full type names that should be ignored in <see cref="ILogger.BeginScope{TState}"></see>./>
         /// </summary>
         [CanBeNull]
         public IReadOnlyCollection<string> IgnoredScopes { get; set; }
+
+        /// <summary>
+        /// Full type name prefixes that should be ignored in <see cref="ILogger.BeginScope{TState}"></see>./>
+        /// </summary>
+        [CanBeNull]
+        public IReadOnlyCollection<string> IgnoredScopePrefixes { get; set; }
 
         public bool AddEventIdProperties { get; set; }
     }

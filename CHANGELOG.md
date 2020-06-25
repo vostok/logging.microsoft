@@ -1,3 +1,7 @@
+## 2.0.11 (25.06.2020):
+
+Scopes can now be ignored by type name prefixes.
+
 ## 2.0.10 (25.06.2020):
 
 - Do not add event id properties by default (there's a setting for it now in VostokLoggerProviderSettings).
