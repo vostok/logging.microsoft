@@ -23,7 +23,7 @@ namespace Vostok.Logging.Microsoft.Tests
         public void SetUp()
         {
             oracleLog = new MemoryLog();
-            microsoftLogger = new VostokLoggerProvider.Logger(oracleLog, Array.Empty<string>(), false);
+            microsoftLogger = new VostokLoggerProvider.Logger(oracleLog, Array.Empty<string>(), Array.Empty<string>(), false);
             microsoftLog = new MicrosoftLog(microsoftLogger);
         }
 

@@ -59,6 +59,7 @@ namespace Vostok.Logging.Microsoft
             return new Logger(
                 string.IsNullOrEmpty(categoryName) ? log : log.ForContext(categoryName), 
                 settings.IgnoredScopes,
+                settings.IgnoredScopePrefixes,
                 settings.AddEventIdProperties);
         }
 
@@ -71,13 +72,19 @@ namespace Vostok.Logging.Microsoft
         {
             private readonly ILog log;
             private readonly IReadOnlyCollection<string> ignoredScopes;
+            private readonly IReadOnlyCollection<string> ignoredScopePrefixes;
             private readonly bool addEventIdProperties;
             private readonly AsyncLocal<UseScope> scope = new AsyncLocal<UseScope>();
 
-            public Logger(ILog log, IReadOnlyCollection<string> ignoredScopes, bool addEventIdProperties)
+            public Logger(
+                ILog log, 
+                IReadOnlyCollection<string> ignoredScopes,
+                IReadOnlyCollection<string> ignoredScopePrefixes,
+                bool addEventIdProperties)
             {
                 this.log = log;
                 this.ignoredScopes = ignoredScopes;
+                this.ignoredScopePrefixes = ignoredScopePrefixes;
                 this.addEventIdProperties = addEventIdProperties;
             }
 
@@ -117,6 +124,13 @@ namespace Vostok.Logging.Microsoft
 
                 if (ignoredScopes?.Contains(scopeName) == true)
                     return emptyDisposable;
+
+                if (ignoredScopePrefixes != null)
+                    foreach (var prefix in ignoredScopePrefixes)
+                    {
+                        if (scopeName?.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) == true)
+                            return emptyDisposable;
+                    }
 
                 var scopeValue = state == null ? scopeName : Convert.ToString(state);
                 var scopeLog = scope.Value?.Log ?? log.WithOperationContext();

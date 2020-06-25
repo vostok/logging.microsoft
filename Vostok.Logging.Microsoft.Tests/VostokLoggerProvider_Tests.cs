@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
+using Vostok.Commons.Helpers.Disposable;
 using Vostok.Logging.Abstractions;
 using Vostok.Logging.Abstractions.Values;
 using Vostok.Logging.Microsoft.Tests.Helpers;
@@ -206,14 +207,46 @@ namespace Vostok.Logging.Microsoft.Tests
                 });
 
             var logger = loggerProvider.CreateLogger(null);
-            using (logger.BeginScope(new HashSet<int>()))
-            using (logger.BeginScope(new HashSet<string>()))
+            using (var scope1 = logger.BeginScope(new HashSet<int>()))
+            using (var scope2 = logger.BeginScope(new HashSet<string>()))
             {
+                scope1.Should().BeOfType<EmptyDisposable>();
+                scope2.Should().NotBeOfType<EmptyDisposable>();
+
                 logger.LogInformation("message");
             }
 
             var expectedLogEvent = new VostokLogEvent(LogLevel.Info, DateTimeOffset.UtcNow, "message")
                 .WithProperty("operationContext", new OperationContextValue(new[] {"System.Collections.Generic.HashSet`1[System.String]"}));
+
+            log.Events.Single()
+                .Should()
+                .BeEquivalentTo(
+                    expectedLogEvent,
+                    o => o.Excluding(x => x.Timestamp));
+        }
+
+        [Test]
+        public void Log_InIgnoredScopePrefix_LogsWithoutScope()
+        {
+            loggerProvider = new VostokLoggerProvider(
+                log,
+                new VostokLoggerProviderSettings
+                {
+                    IgnoredScopePrefixes = new HashSet<string> { "system" }
+                });
+
+            var logger = loggerProvider.CreateLogger(null);
+            using (var scope1 = logger.BeginScope(new HashSet<int>()))
+            using (var scope2 = logger.BeginScope(new HashSet<string>()))
+            {
+                scope1.Should().BeOfType<EmptyDisposable>();
+                scope2.Should().BeOfType<EmptyDisposable>();
+
+                logger.LogInformation("message");
+            }
+
+            var expectedLogEvent = new VostokLogEvent(LogLevel.Info, DateTimeOffset.UtcNow, "message");
 
             log.Events.Single()
                 .Should()
