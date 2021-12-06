@@ -1,3 +1,7 @@
+## 2.0.12 (06-12-2021):
+
+Added `net6.0` target.
+
 ## 2.0.11 (25.06.2020):
 
 Scopes can now be ignored by type name prefixes.
