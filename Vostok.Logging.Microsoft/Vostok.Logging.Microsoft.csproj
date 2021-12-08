@@ -7,7 +7,7 @@
     <LangVersion>7.2</LangVersion>
   </PropertyGroup>
   <PropertyGroup>
-    <VersionPrefix>2.0.13</VersionPrefix>
+    <VersionPrefix>2.0.14</VersionPrefix>
   </PropertyGroup>
   <PropertyGroup>
     <Title>Vostok.Logging.Microsoft</Title>
