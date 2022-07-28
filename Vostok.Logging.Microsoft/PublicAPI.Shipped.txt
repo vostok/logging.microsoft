@@ -1,0 +1,33 @@
+const Vostok.Logging.Microsoft.Helpers.MicrosoftLogScopes.ActionLogScope = "Microsoft.AspNetCore.Mvc.MvcCoreLoggerExtensions+ActionLogScope" -> string
+const Vostok.Logging.Microsoft.Helpers.MicrosoftLogScopes.ActionLogScopeOld = "Microsoft.AspNetCore.Mvc.Internal.MvcCoreLoggerExtensions+ActionLogScope" -> string
+const Vostok.Logging.Microsoft.Helpers.MicrosoftLogScopes.ConnectionLogScope = "Microsoft.AspNetCore.Server.Kestrel.Core.Internal.ConnectionLogScope" -> string
+const Vostok.Logging.Microsoft.Helpers.MicrosoftLogScopes.HealthCheckLogScope = "Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckLogScope" -> string
+const Vostok.Logging.Microsoft.Helpers.MicrosoftLogScopes.HostingLogScope = "Microsoft.AspNetCore.Hosting.HostingLoggerExtensions+HostingLogScope" -> string
+const Vostok.Logging.Microsoft.Helpers.MicrosoftLogScopes.HostingLogScopeOld = "Microsoft.AspNetCore.Hosting.Internal.HostingLoggerExtensions+HostingLogScope" -> string
+const Vostok.Logging.Microsoft.Helpers.MicrosoftLogScopes.ViewComponentLogScope = "Microsoft.AspNetCore.Mvc.ViewFeatures.MvcViewFeaturesLoggerExtensions+ViewComponentLogScope" -> string
+static Vostok.Logging.Microsoft.VostokLoggerExtensions.AddVostok(this Microsoft.Extensions.Logging.ILoggerFactory factory, Vostok.Logging.Abstractions.ILog log) -> Microsoft.Extensions.Logging.ILoggerFactory
+static Vostok.Logging.Microsoft.VostokLoggerExtensions.AddVostok(this Microsoft.Extensions.Logging.ILoggingBuilder builder, Vostok.Logging.Abstractions.ILog log) -> Microsoft.Extensions.Logging.ILoggingBuilder
+Vostok.Logging.Microsoft.Helpers.MicrosoftLogScopes
+Vostok.Logging.Microsoft.MicrosoftLog
+Vostok.Logging.Microsoft.MicrosoftLog.ForContext(string context) -> Vostok.Logging.Abstractions.ILog
+Vostok.Logging.Microsoft.MicrosoftLog.IsEnabledFor(Vostok.Logging.Abstractions.LogLevel level) -> bool
+Vostok.Logging.Microsoft.MicrosoftLog.Log(Vostok.Logging.Abstractions.LogEvent event) -> void
+Vostok.Logging.Microsoft.MicrosoftLog.MicrosoftLog(Microsoft.Extensions.Logging.ILogger logger, Vostok.Logging.Microsoft.MicrosoftLogSettings settings = null) -> void
+Vostok.Logging.Microsoft.MicrosoftLogSettings
+Vostok.Logging.Microsoft.MicrosoftLogSettings.MicrosoftLogSettings() -> void
+Vostok.Logging.Microsoft.MicrosoftLogSettings.UseVostokTemplate.get -> bool
+Vostok.Logging.Microsoft.MicrosoftLogSettings.UseVostokTemplate.set -> void
+Vostok.Logging.Microsoft.VostokLoggerExtensions
+Vostok.Logging.Microsoft.VostokLoggerProvider
+Vostok.Logging.Microsoft.VostokLoggerProvider.CreateLogger(string categoryName) -> Microsoft.Extensions.Logging.ILogger
+Vostok.Logging.Microsoft.VostokLoggerProvider.Dispose() -> void
+Vostok.Logging.Microsoft.VostokLoggerProvider.VostokLoggerProvider(Vostok.Logging.Abstractions.ILog log) -> void
+Vostok.Logging.Microsoft.VostokLoggerProvider.VostokLoggerProvider(Vostok.Logging.Abstractions.ILog log, Vostok.Logging.Microsoft.VostokLoggerProviderSettings settings) -> void
+Vostok.Logging.Microsoft.VostokLoggerProviderSettings
+Vostok.Logging.Microsoft.VostokLoggerProviderSettings.AddEventIdProperties.get -> bool
+Vostok.Logging.Microsoft.VostokLoggerProviderSettings.AddEventIdProperties.set -> void
+Vostok.Logging.Microsoft.VostokLoggerProviderSettings.IgnoredScopePrefixes.get -> System.Collections.Generic.IReadOnlyCollection<string>
+Vostok.Logging.Microsoft.VostokLoggerProviderSettings.IgnoredScopePrefixes.set -> void
+Vostok.Logging.Microsoft.VostokLoggerProviderSettings.IgnoredScopes.get -> System.Collections.Generic.IReadOnlyCollection<string>
+Vostok.Logging.Microsoft.VostokLoggerProviderSettings.IgnoredScopes.set -> void
+Vostok.Logging.Microsoft.VostokLoggerProviderSettings.VostokLoggerProviderSettings() -> void
