@@ -7,7 +7,6 @@ const Vostok.Logging.Microsoft.Helpers.MicrosoftLogScopes.HostingLogScopeOld = "
 const Vostok.Logging.Microsoft.Helpers.MicrosoftLogScopes.ViewComponentLogScope = "Microsoft.AspNetCore.Mvc.ViewFeatures.MvcViewFeaturesLoggerExtensions+ViewComponentLogScope" -> string
 static Vostok.Logging.Microsoft.VostokLoggerExtensions.AddVostok(this Microsoft.Extensions.Logging.ILoggerFactory factory, Vostok.Logging.Abstractions.ILog log) -> Microsoft.Extensions.Logging.ILoggerFactory
 static Vostok.Logging.Microsoft.VostokLoggerExtensions.AddVostok(this Microsoft.Extensions.Logging.ILoggingBuilder builder, Vostok.Logging.Abstractions.ILog log) -> Microsoft.Extensions.Logging.ILoggingBuilder
-static Vostok.Logging.Microsoft.VostokLoggerExtensions.CreateVostokMicrosoftLog(this Microsoft.Extensions.Logging.ILoggerFactory factory, string categoryName) -> Vostok.Logging.Microsoft.MicrosoftLog
 Vostok.Logging.Microsoft.Helpers.MicrosoftLogScopes
 Vostok.Logging.Microsoft.MicrosoftLog
 Vostok.Logging.Microsoft.MicrosoftLog.ForContext(string context) -> Vostok.Logging.Abstractions.ILog
