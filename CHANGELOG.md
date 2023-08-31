@@ -1,3 +1,7 @@
+## 2.0.15 (31-08-2023):
+
+Revert adding `VostokLoggerExtensions.CreateVostokMicrosoftLog` extension.
+
 ## 2.0.14 (31-08-2023):
 
 Added `VostokLoggerExtensions.CreateVostokMicrosoftLog` extension to create Vostok log from ILoggerFactory.
