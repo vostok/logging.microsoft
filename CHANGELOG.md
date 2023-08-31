@@ -1,3 +1,7 @@
+## 2.0.14 (31-08-2023):
+
+Added `VostokLoggerExtensions.CreateVostokMicrosoftLog` extension to create Vostok log from ILoggerFactory.
+
 ## 2.0.13 (06-12-2021):
 
 Added `net6.0` target.
