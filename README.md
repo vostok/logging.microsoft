@@ -8,3 +8,6 @@ An implementation of Microsoft.Extensions.Logging.Abstractions.ILogger that writ
 **Build guide**: https://github.com/vostok/devtools/blob/master/library-dev-conventions/how-to-build-a-library.md
 
 **User documentation**: https://vostok.gitbook.io/logging/
+
+
+asdasd
