@@ -10,4 +10,4 @@ An implementation of Microsoft.Extensions.Logging.Abstractions.ILogger that writ
 **User documentation**: https://vostok.gitbook.io/logging/
 
 
-asdasd
+asdasdasd
