@@ -24,7 +24,8 @@
     <Compile Include="..\..\vostok.commons.time\Vostok.Commons.Time\PreciseDateTime.cs" Link="Commons\PreciseDateTime.cs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="2.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.1" Condition="'$(TargetFramework)' != 'netstandard2.0'"/>
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="2.0.0" Condition="'$(TargetFramework)' == 'netstandard2.0'"/>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Vostok.Logging.Abstractions">
