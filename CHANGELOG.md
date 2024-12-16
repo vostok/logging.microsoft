@@ -1,3 +1,7 @@
+## 2.0.17 (16-12-2024):
+
+Use `Microsoft.Extensions.Logging` with version `8.0.1` for target frameworks greater than netstandard2.0.
+
 ## 2.0.16 (16-12-2024): 
 
 Bump NuGet deps versions
