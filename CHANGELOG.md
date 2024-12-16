@@ -1,3 +1,7 @@
+## 2.0.16 (16-12-2024): 
+
+Bump NuGet deps versions
+
 ## 2.0.15 (31-08-2023):
 
 Revert adding `VostokLoggerExtensions.CreateVostokMicrosoftLog` extension.
