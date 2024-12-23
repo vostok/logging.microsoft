@@ -28,17 +28,8 @@
     <PackageReference Include="Microsoft.Extensions.Logging" Version="2.0.0" Condition="'$(TargetFramework)' == 'netstandard2.0'" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Vostok.Logging.Abstractions">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\vostok.logging.abstractions\Vostok.Logging.Abstractions\bin\Release\$(ReferencesFramework)\Vostok.Logging.Abstractions.dll</HintPath>
-    </Reference>
-    <Reference Include="Vostok.Logging.Context">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\vostok.logging.context\Vostok.Logging.Context\bin\Release\$(ReferencesFramework)\Vostok.Logging.Context.dll</HintPath>
-    </Reference>
-    <Reference Include="Vostok.Logging.Formatting">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\vostok.logging.formatting\Vostok.Logging.Formatting\bin\Release\$(ReferencesFramework)\Vostok.Logging.Formatting.dll</HintPath>
-    </Reference>
+    <ModuleReference Include="vostok.logging.abstractions" />
+    <ModuleReference Include="vostok.logging.context" />
+    <ModuleReference Include="vostok.logging.formatting" />
   </ItemGroup>
 </Project>
