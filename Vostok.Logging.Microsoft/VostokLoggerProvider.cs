@@ -133,7 +133,7 @@ namespace Vostok.Logging.Microsoft
                 // when only {OriginalFormat} property present.
                 ImmutableArrayDictionary<string, object>? properties = null!;
                 ImmutableArrayDictionary<string, object> GetProperties()
-                    => properties ??= new ImmutableArrayDictionary<string, object>(propertiesCount);
+                    => properties ??= new ImmutableArrayDictionary<string, object>(propertiesCount, StringComparer.Ordinal);
 
                 if (addEventIdProperties)
                 {
