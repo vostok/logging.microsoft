@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
+using Vostok.Commons.Collections;
 using Vostok.Commons.Helpers.Disposable;
 using Vostok.Commons.Time;
 using Vostok.Logging.Abstractions;
@@ -20,7 +21,7 @@ namespace Vostok.Logging.Microsoft
     [PublicAPI]
     public class VostokLoggerProvider : ILoggerProvider
     {
-        private static readonly EmptyDisposable emptyDisposable = new EmptyDisposable();
+        private static readonly EmptyDisposable emptyDisposable = new();
 
         private readonly ILog log;
         private readonly VostokLoggerProviderSettings settings;
@@ -74,7 +75,7 @@ namespace Vostok.Logging.Microsoft
             private readonly IReadOnlyCollection<string> ignoredScopes;
             private readonly IReadOnlyCollection<string> ignoredScopePrefixes;
             private readonly bool addEventIdProperties;
-            private readonly AsyncLocal<UseScope> scope = new AsyncLocal<UseScope>();
+            private readonly AsyncLocal<UseScope> scope = new();
 
             public Logger(
                 ILog log, 
@@ -116,7 +117,7 @@ namespace Vostok.Logging.Microsoft
                 localLog.Log(logEvent);
             }
 
-            private (IReadOnlyDictionary<string, object> properites, string messageTemplate) ExtractProperties<TState>(
+            private (IReadOnlyDictionary<string, object>? properites, string messageTemplate) ExtractProperties<TState>(
                 EventId eventId,
                 TState state,
                 Exception exception,
@@ -128,15 +129,19 @@ namespace Vostok.Logging.Microsoft
                 if (state is IReadOnlyCollection<KeyValuePair<string, object>> collection)
                     propertiesCount += collection.Count;
 
-                var properties = LogEvent.CreateProperties(Math.Max(4, propertiesCount));
+                // note (ponomaryovigor, 26.02.2025): Hack to avoid possible unnecessary allocation
+                // when only {OriginalFormat} property present.
+                ImmutableArrayDictionary<string, object>? properties = null!;
+                ImmutableArrayDictionary<string, object> GetProperties()
+                    => properties ??= new ImmutableArrayDictionary<string, object>(propertiesCount);
 
                 if (addEventIdProperties)
                 {
                     if (eventId.Id != 0)
-                        properties.SetUnsafe("EventId.Id", eventId.Id, false);
+                        GetProperties().SetUnsafe("EventId.Id", eventId.Id, false);
 
                     if (!string.IsNullOrEmpty(eventId.Name))
-                        properties.SetUnsafe("EventId.Name", eventId.Name, false);
+                        GetProperties().SetUnsafe("EventId.Name", eventId.Name, false);
                 }
 
                 if (state is IEnumerable<KeyValuePair<string, object>> props)
@@ -149,20 +154,12 @@ namespace Vostok.Logging.Microsoft
                             continue;
                         }
 
-                        properties.SetUnsafe(kvp.Key, kvp.Value, false);
+                        GetProperties().SetUnsafe(kvp.Key, kvp.Value, false);
                     }
                 }
 
-                if (messageTemplate is null)
-                {
-                    if (formatter is not null)
-                        messageTemplate = formatter(state, exception);
-                    else
-                        messageTemplate = state is null ? typeof(TState).FullName : Convert.ToString(state);
-                }
-
-                if (properties.Count is 0)
-                    properties = null;
+                messageTemplate ??= formatter?.Invoke(state, exception);
+                messageTemplate ??= state is null ? typeof(TState).FullName : Convert.ToString(state);
 
                 return (properties, messageTemplate);
             }
