@@ -5,14 +5,11 @@ using Vostok.Logging.Microsoft.Helpers;
 
 namespace Vostok.Logging.Microsoft
 {
-    internal sealed class VostokLogEventWrapper : IEnumerable<KeyValuePair<string, object>>
+    internal sealed class VostokLogEventWrapper(LogEvent logEvent) : IReadOnlyCollection<KeyValuePair<string, object>>
     {
-        public VostokLogEventWrapper(LogEvent logEvent)
-        {
-            LogEvent = logEvent;
-        }
+        public LogEvent LogEvent { get; } = logEvent;
 
-        public LogEvent LogEvent { get; }
+        public int Count => 1 + LogEvent.Properties?.Count ?? 0;
 
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
         {

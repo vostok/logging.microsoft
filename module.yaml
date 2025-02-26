@@ -22,7 +22,7 @@ notests *default:
     - vostok.commons.helpers/src
     - vostok.commons.time/src
     - vostok.devtools
-    - vostok.logging.abstractions
+    - vostok.logging.abstractions@expose-internals
     - vostok.logging.context
     - vostok.logging.formatting
 
