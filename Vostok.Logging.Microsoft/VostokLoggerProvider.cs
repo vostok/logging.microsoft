@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
@@ -123,30 +124,26 @@ namespace Vostok.Logging.Microsoft
                 Exception exception,
                 Func<TState, Exception, string> formatter)
             {
-                string messageTemplate = null!;
+                ImmutableArrayDictionary<string, object>? vostokProperties = null!;
+                var microsoftProperties = state as IEnumerable<KeyValuePair<string, object>>;
 
-                var propertiesCount = addEventIdProperties ? 2 : 0;
-                if (state is IReadOnlyCollection<KeyValuePair<string, object>> collection)
-                    propertiesCount += collection.Count;
-
-                // note (ponomaryovigor, 26.02.2025): Hack to avoid possible unnecessary allocation
-                // when only {OriginalFormat} property present.
-                ImmutableArrayDictionary<string, object>? properties = null!;
-                ImmutableArrayDictionary<string, object> GetProperties()
-                    => properties ??= new ImmutableArrayDictionary<string, object>(propertiesCount, StringComparer.Ordinal);
+                var propertiesCapacity = addEventIdProperties ? 2 : 0;
+                if (microsoftProperties is IReadOnlyCollection<KeyValuePair<string, object>> collection)
+                    propertiesCapacity += collection.Count;
 
                 if (addEventIdProperties)
                 {
                     if (eventId.Id != 0)
-                        GetProperties().SetUnsafe("EventId.Id", eventId.Id, false);
+                        SetProperty("EventId.Id", eventId.Id);
 
                     if (!string.IsNullOrEmpty(eventId.Name))
-                        GetProperties().SetUnsafe("EventId.Name", eventId.Name, false);
+                        SetProperty("EventId.Name", eventId.Name);
                 }
 
-                if (state is IEnumerable<KeyValuePair<string, object>> props)
+                string messageTemplate = null!;
+                if (microsoftProperties is not null)
                 {
-                    foreach (var kvp in props)
+                    foreach (var kvp in microsoftProperties)
                     {
                         if (kvp.Key is MicrosoftLogProperties.OriginalFormatKey)
                         {
@@ -154,14 +151,23 @@ namespace Vostok.Logging.Microsoft
                             continue;
                         }
 
-                        GetProperties().SetUnsafe(kvp.Key, kvp.Value, false);
+                        SetProperty(kvp.Key, kvp.Value);
                     }
                 }
 
                 messageTemplate ??= formatter?.Invoke(state, exception);
                 messageTemplate ??= state is null ? typeof(TState).FullName : Convert.ToString(state);
 
-                return (properties, messageTemplate);
+                return (vostokProperties, messageTemplate);
+
+                // note (ponomaryovigor, 26.02.2025): Lazy method to avoid possible unnecessary dictionary allocation
+                // when only {OriginalFormat} property is present.
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                void SetProperty(string key, object value)
+                {
+                    vostokProperties ??= new ImmutableArrayDictionary<string, object>(propertiesCapacity, StringComparer.Ordinal);
+                    vostokProperties.SetUnsafe(key, value, false);
+                }
             }
 
             public bool IsEnabled(LogLevel logLevel) => logLevel != LogLevel.None && log.IsEnabledFor(TranslateLogLevel(logLevel));
