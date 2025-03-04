@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
+using Vostok.Commons.Collections;
 using Vostok.Commons.Helpers.Disposable;
 using Vostok.Commons.Time;
 using Vostok.Logging.Abstractions;
@@ -20,7 +22,7 @@ namespace Vostok.Logging.Microsoft
     [PublicAPI]
     public class VostokLoggerProvider : ILoggerProvider
     {
-        private static readonly EmptyDisposable emptyDisposable = new EmptyDisposable();
+        private static readonly EmptyDisposable emptyDisposable = new();
 
         private readonly ILog log;
         private readonly VostokLoggerProviderSettings settings;
@@ -74,7 +76,7 @@ namespace Vostok.Logging.Microsoft
             private readonly IReadOnlyCollection<string> ignoredScopes;
             private readonly IReadOnlyCollection<string> ignoredScopePrefixes;
             private readonly bool addEventIdProperties;
-            private readonly AsyncLocal<UseScope> scope = new AsyncLocal<UseScope>();
+            private readonly AsyncLocal<UseScope> scope = new();
 
             public Logger(
                 ILog log, 
@@ -110,10 +112,62 @@ namespace Vostok.Logging.Microsoft
                 if (!log.IsEnabledFor(translatedLevel))
                     return;
 
-                var messageTemplate = ExtractMessageTemplate(state, exception, formatter);
-                var logEvent = EnrichWithProperties(new LogEvent(translatedLevel, PreciseDateTime.Now, messageTemplate, exception), eventId, state);
-                
+                var (properties, messageTemplate) = ExtractProperties(eventId, state, exception, formatter);
+                var logEvent = new LogEvent(translatedLevel, PreciseDateTime.Now, messageTemplate, properties, exception);
+
                 localLog.Log(logEvent);
+            }
+
+            private (IReadOnlyDictionary<string, object>? properites, string messageTemplate) ExtractProperties<TState>(
+                EventId eventId,
+                TState state,
+                Exception exception,
+                Func<TState, Exception, string> formatter)
+            {
+                ImmutableArrayDictionary<string, object>? vostokProperties = null!;
+                var microsoftProperties = state as IEnumerable<KeyValuePair<string, object>>;
+
+                var propertiesCapacity = addEventIdProperties ? 2 : 0;
+                if (microsoftProperties is IReadOnlyCollection<KeyValuePair<string, object>> collection)
+                    propertiesCapacity += collection.Count;
+
+                if (addEventIdProperties)
+                {
+                    if (eventId.Id != 0)
+                        SetProperty("EventId.Id", eventId.Id);
+
+                    if (!string.IsNullOrEmpty(eventId.Name))
+                        SetProperty("EventId.Name", eventId.Name);
+                }
+
+                string messageTemplate = null!;
+                if (microsoftProperties is not null)
+                {
+                    foreach (var kvp in microsoftProperties)
+                    {
+                        if (kvp.Key is MicrosoftLogProperties.OriginalFormatKey)
+                        {
+                            messageTemplate = Convert.ToString(kvp.Value);
+                            continue;
+                        }
+
+                        SetProperty(kvp.Key, kvp.Value);
+                    }
+                }
+
+                messageTemplate ??= formatter?.Invoke(state, exception);
+                messageTemplate ??= state is null ? typeof(TState).FullName : Convert.ToString(state);
+
+                return (vostokProperties, messageTemplate);
+
+                // note (ponomaryovigor, 26.02.2025): Lazy method to avoid possible unnecessary dictionary allocation
+                // when only {OriginalFormat} property is present.
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                void SetProperty(string key, object value)
+                {
+                    vostokProperties ??= new ImmutableArrayDictionary<string, object>(propertiesCapacity, StringComparer.Ordinal);
+                    vostokProperties.SetUnsafe(key, value, false);
+                }
             }
 
             public bool IsEnabled(LogLevel logLevel) => logLevel != LogLevel.None && log.IsEnabledFor(TranslateLogLevel(logLevel));
@@ -147,47 +201,6 @@ namespace Vostok.Logging.Microsoft
                 }
 
                 return new UseScope(scopeLog, scopeValue, scope);
-            }
-
-            private LogEvent EnrichWithProperties<TState>(LogEvent logEvent, EventId eventId, TState state)
-            {
-                if (state is IEnumerable<KeyValuePair<string, object>> props)
-                {
-                    foreach (var kvp in props)
-                    {
-                        if (kvp.Key == MicrosoftLogProperties.OriginalFormatKey)
-                            continue;
-                        logEvent = logEvent.WithPropertyIfAbsent(kvp.Key, kvp.Value);
-                    }
-                }
-
-                if (addEventIdProperties)
-                {
-                    if (eventId.Id != 0)
-                        logEvent = logEvent.WithPropertyIfAbsent("EventId.Id", eventId.Id);
-
-                    if (!string.IsNullOrEmpty(eventId.Name))
-                        logEvent = logEvent.WithPropertyIfAbsent("EventId.Name", eventId.Name);
-                }
-
-                return logEvent;
-            }
-
-            private static string ExtractMessageTemplate<TState>(TState state, Exception exception, Func<TState, Exception, string> formatter)
-            {
-                if (state is IEnumerable<KeyValuePair<string, object>> props)
-                {
-                    foreach (var kvp in props)
-                    {
-                        if (kvp.Key == MicrosoftLogProperties.OriginalFormatKey)
-                            return Convert.ToString(kvp.Value);
-                    }
-                }
-
-                if (formatter != null)
-                    return formatter(state, exception);
-
-                return ReferenceEquals(state, null) ? typeof(TState).FullName : Convert.ToString(state);
             }
 
             private static Abstractions.LogLevel TranslateLogLevel(LogLevel logLevel)
