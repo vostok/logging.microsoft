@@ -1,3 +1,7 @@
+## 2.0.19 (04-03-2025):
+
+Optimize LogEvent construction.
+
 ## 2.0.18 (16-12-2024):
 
 Use `Microsoft.Extensions.Logging` with version `6.0.1` for target frameworks greater than netstandard2.0.
